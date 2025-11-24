@@ -25,14 +25,12 @@ Mobilytics/
 │   └── 03_feature_engineering.ipynb
 │
 ├── 2_Modelado/                                # Fase 2: Algoritmos de Clustering
-│   ├── 04_dbscan_clustering_optimized.ipynb
+│   ├── 04_hdbscan_clustering.ipynb
 │   ├── 05_kmeans_place_classification.ipynb
 │   ├── 06_hierarchical_spatial_clustering.ipynb
-│   ├── 07_hierarchical_6clusters.ipynb        # Modelo final recomendado
-│   ├── results/                               # Resultados DBSCAN
+│   ├── results/                               # Resultados k-means k=#
 │   ├── results_optimized/                     # Resultados DBSCAN optimizado
 │   ├── results_hierarchical/                  # Resultados jerárquicos k=3
-│   └── results_hierarchical_k6/               # Resultados jerárquicos k=6 (final)
 │
 ├── 3_Despliegue/                              # Fase 3: Aplicación Streamlit
 │   ├── .streamlit/
@@ -118,44 +116,41 @@ jupyter notebook 2_Modelado/
 
 **Notebooks disponibles:**
 
-1. **04_dbscan_clustering_optimized.ipynb**
-   - Algoritmo: DBSCAN con optimización de parámetros
+1. **04_hddbscan_clustering.ipynb**
+   - Algoritmo: HDBSCAN con optimización de parámetros
    - Resultados en: `results_optimized/`
 
 2. **05_kmeans_place_classification.ipynb**
    - Algoritmo: K-Means con método del codo y silueta
    - Clasificación de lugares por comportamiento
+   - Resultados en: `results/`
+   - **Este es el modelo final utilizado en la aplicación Streamlit**
 
 3. **06_hierarchical_spatial_clustering.ipynb**
    - Algoritmo: Clustering Jerárquico Aglomerativo
    - Resultados en: `results_hierarchical/` (k=3 clusters)
 
-4. **07_hierarchical_6clusters.ipynb** ⭐ **RECOMENDADO**
-   - Algoritmo: Clustering Jerárquico Aglomerativo (k=6)
-   - Resultados en: `results_hierarchical_k6/`
-   - **Este es el modelo final utilizado en la aplicación Streamlit**
-
-**⚠️ Ejecutar el notebook 07 antes de lanzar la app:**
+**⚠️ Ejecutar el notebook `05_kmeans_place_classification.ipynb` antes de lanzar la app:**
 
 ```bash
 # Abrir Jupyter
 jupyter notebook
 
-# Navegar a 2_Modelado/07_hierarchical_6clusters.ipynb
+# Navegar a 2_Modelado/05_kmeans_place_classification.ipynb
 # Ejecutar todas las celdas: Cell > Run All
 ```
 
-Esto generará la carpeta `results_hierarchical_k6/` con los archivos necesarios:
-- `hierarchical_k6_clustered_places.csv`
-- `hierarchical_structure_k3_k6.csv`
-- `cluster_characteristics.json`
-- `hierarchical_k6_cluster_statistics.csv`
+Esto generará la carpeta `results/` con los archivos necesarios:
+- `kmeans_clustered_places.csv`
+- `kmeans_cluster_profiles.csv`
+- `kmeans_evaluation_metrics.txt`
+- Modelos guardados en `results/models/`
 
 ### Fase 3: Despliegue con Streamlit
 
-**Requisito previo:** Ejecutar el notebook `07_hierarchical_6clusters.ipynb` (Fase 2)
+**Requisito previo:** Ejecutar el notebook `05_kmeans_place_classification.ipynb` (Fase 2)
 
-Una vez generados los resultados del clustering jerárquico (k=6), iniciar la aplicación:
+Una vez generados los resultados del clustering KMeans (k=4), iniciar la aplicación:
 
 ```bash
 cd 3_Despliegue
@@ -165,11 +160,18 @@ streamlit run app.py
 La aplicación se abrirá automáticamente en tu navegador en `http://localhost:8501`
 
 **Características de la aplicación:**
-- Visualización interactiva de clusters en mapas
-- Exploración de jerarquía de clusters (k=3 → k=6)
-- Estadísticas y métricas por cluster
-- Filtrado y búsqueda de lugares específicos
-- Análisis de características de visitantes
+- **Visualización interactiva** de 4 clusters KMeans en mapas
+- **Marcadores individuales** con icon='info-sign' (sin agrupación)
+- **Colores por cluster**:
+  - 🔴 Cluster 0 (Rojo): Incrementar visitas y frecuencia
+  - 🟠 Cluster 1 (Naranja): Fidelizar visitas ocasionales
+  - 🟢 Cluster 2 (Verde): Maximizar valor por visita y presencia de marca
+  - 🔵 Cluster 3 (Azul): Profundizar relación y aprovechar recurrencia
+- **Filtro geográfico por radio**: Selección de áreas específicas (Centro San Salvador, Santa Tecla, Antiguo Cuscatlán)
+- **Filtros por cluster**: Visualización selectiva de clusters
+- **Métricas en tiempo real**: Total lugares, visitantes promedio, estadía promedio
+- **Estadísticas detalladas**: Por cluster con objetivos estratégicos
+- **Popups informativos**: Información detallada de cada lugar al hacer clic
 
 ## Características Principales
 
@@ -180,10 +182,11 @@ La aplicación se abrirá automáticamente en tu navegador en `http://localhost:
   - Maneja ruido y outliers
   - No requiere especificar k a priori
 
-- **K-Means**: Particionamiento en k clusters
+- **K-Means (Modelo Final - App Streamlit)**: Particionamiento en 4 clusters
   - Rápido y eficiente
-  - Útil para clasificación de lugares
-  - Requiere selección de k óptimo
+  - Clasificación de lugares por objetivos estratégicos
+  - K óptimo = 4 (determinado por Silhouette Score)
+  - Cada cluster tiene un objetivo de negocio definido
 
 - **Clustering Jerárquico Aglomerativo**: Estructura jerárquica de clusters
   - Permite exploración multi-nivel (k=3, k=6)
@@ -241,17 +244,29 @@ La aplicación se abrirá automáticamente en tu navegador en `http://localhost:
 
 ## Resultados Esperados
 
-El proyecto genera diferentes niveles de segmentación:
+El proyecto genera una segmentación estratégica con **4 clusters KMeans**:
 
-1. **Nivel 1 (k=3)**: Macro-segmentación de zonas
-   - Alta densidad comercial
-   - Zonas residenciales
-   - Áreas mixtas
+### Clusters y Objetivos Estratégicos:
 
-2. **Nivel 2 (k=6)**: Micro-segmentación detallada
-   - Clusters específicos por perfil de visitante
-   - Patrones temporales diferenciados
-   - Características demográficas particulares
+1. **Cluster 0 - Incrementar visitas y frecuencia** 🔴
+   - Lugares con bajo tráfico actual
+   - Potencial para aumentar visibilidad
+   - Estrategia: Campañas de atracción de tráfico
+
+2. **Cluster 1 - Fidelizar visitas ocasionales** 🟠
+   - Visitantes esporádicos
+   - Bajo nivel de recurrencia
+   - Estrategia: Programas de fidelización
+
+3. **Cluster 2 - Maximizar valor por visita y presencia de marca** 🟢
+   - Alto tiempo de estadía
+   - Oportunidad de engagement
+   - Estrategia: Optimizar experiencia de usuario
+
+4. **Cluster 3 - Profundizar relación y aprovechar recurrencia** 🔵
+   - Alta recurrencia de visitantes
+   - Base de usuarios leales
+   - Estrategia: Maximizar valor de cliente recurrente
 
 ## Aplicaciones
 

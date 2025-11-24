@@ -23,7 +23,7 @@ shapely>=2.0.0
 
 # Web Application (Streamlit)
 streamlit>=1.29.0
-streamlit-folium>=0.15.0
+streamlit-folium>=0.22.0
 
 # Jupyter Notebooks
 jupyter>=1.0.0
